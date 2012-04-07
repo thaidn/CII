@@ -1,8 +1,9 @@
 static char rcsid[] = "$Id: atom.c 6 2007-01-22 00:45:22Z drhanson $";
-#include "atom.h"
+#include "my_atom.h"
 #include <string.h>
 #include "assert.h"
 #include <limits.h>
+#include <stdarg.h>
 #include "mem.h"
 #define NELEMS(x) ((sizeof (x))/(sizeof ((x)[0])))
 static struct atom {
@@ -112,4 +113,75 @@ int Atom_length(const char *str) {
 				return p->len;
 	assert(0);
 	return 0;
+}
+
+/*
+   c.r.e: str must be non NULL pointer
+   c.r.e: str must be an atom
+*/
+void Atom_free(const char *str) {
+   struct atom *p, *last;
+   int i;
+   assert(str);
+   for (i = 0; i < NELEMS(buckets); i++)
+      for (p = buckets[i]; p; last = p, p = p->link) {
+		   if (p->str == str) {
+            if (p == buckets[i])
+               buckets[i] = p->link;
+            else
+               last->link = p->link;
+            FREE(p);
+            return;
+			}
+		}	
+   assert(0);
+}
+
+void Atom_reset(void) {
+   struct atom *p, *tmp;
+	int i;
+	for (i = 0; i < NELEMS(buckets); i++) {
+		for (p = buckets[i]; p;) {
+         tmp = p;
+         p = p->link;
+         FREE(tmp); 
+		}
+      buckets[i] = NULL;
+	}
+}
+
+/* uc.r.e: the arg list doesn't end with a NULL pointer 
+   uc.r.e: the arg list contains other data types rather than char *
+*/
+void Atom_vload(const char *str, ...) {
+   va_list ap;
+   char *p;
+   if (str) {
+      Atom_string(str);
+      va_start(ap, str);
+      while (p = va_arg(ap, char *))
+         Atom_string(p);
+      va_end(ap);
+   }
+}
+/*
+   c.r.e: str must be non NULL pointer
+*/
+void Atom_aload(const char *str[]) {
+   const char *p;
+   assert(str);
+   while (p = *str++)
+      Atom_string(p);
+}
+
+/*
+   c.r.e: mapfn must be non NULL pointer
+*/
+void Atom_map(AtomMapFn_T mapfn, void *aux) {
+   struct atom *p;
+   int i;
+   assert(mapfn);
+   for (i = 0; i < NELEMS(buckets); i++)
+		for (p = buckets[i]; p; p = p->link)
+         mapfn(p->str, p->len, aux);	
 }
