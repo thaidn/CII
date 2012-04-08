@@ -1,5 +1,5 @@
 static char rcsid[] = "$Id: atom.c 6 2007-01-22 00:45:22Z drhanson $";
-#include "my_atom.h"
+#include "atom.h"
 #include <string.h>
 #include "assert.h"
 #include <limits.h>
@@ -57,8 +57,8 @@ static unsigned long scatter[] = {
 1884137923, 53392249, 1735424165, 1602280572
 };
 const char *Atom_string(const char *str) {
-	assert(str);
-	return Atom_new(str, strlen(str));
+   assert(str);
+   return Atom_new(str, strlen(str));
 }
 const char *Atom_int(long n) {
 	char str[43];
@@ -116,8 +116,8 @@ int Atom_length(const char *str) {
 }
 
 /*
-   c.r.e: str must be non NULL pointer
-   c.r.e: str must be an atom
+   c.r.e: str is NULL
+   c.r.e: str isn't an atom
 */
 void Atom_free(const char *str) {
    struct atom *p, *last;
@@ -150,7 +150,7 @@ void Atom_reset(void) {
 	}
 }
 
-/* uc.r.e: the arg list doesn't end with a NULL pointer 
+/* uc.r.e: the arg list ends with a NULL pointer 
    uc.r.e: the arg list contains other data types rather than char *
 */
 void Atom_vload(const char *str, ...) {
@@ -165,7 +165,7 @@ void Atom_vload(const char *str, ...) {
    }
 }
 /*
-   c.r.e: str must be non NULL pointer
+   c.r.e: str is NULL
 */
 void Atom_aload(const char *str[]) {
    const char *p;
@@ -175,7 +175,7 @@ void Atom_aload(const char *str[]) {
 }
 
 /*
-   c.r.e: mapfn must be non NULL pointer
+   c.r.e: mapfn is NULL
 */
 void Atom_map(AtomMapFn_T mapfn, void *aux) {
    struct atom *p;
