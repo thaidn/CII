@@ -92,19 +92,25 @@ static struct descriptor *dalloc(void *ptr, long size,
 	return avail++;
 }
 void *Mem_alloc(long nbytes, const char *file, int line){
-	struct descriptor *bp;
+   struct descriptor **bp;
 	void *ptr;
 	assert(nbytes > 0);
 	nbytes = ((nbytes + sizeof (union align) - 1)/
 		(sizeof (union align)))*(sizeof (union align));
-	for (bp = freelist.free; bp; bp = bp->free) {
-		if (bp->size > nbytes) {
-			bp->size -= nbytes;
-			ptr = (char *)bp->ptr + bp->size;
-			if ((bp = dalloc(ptr, nbytes, file, line)) != NULL) {
+	for (bp = &(freelist.free); *bp; bp = &(*bp)->free) {
+		if ((*bp)->size > nbytes) {
+         struct descriptor *dp = *bp;
+			dp->size -= nbytes;
+			ptr = (char *)dp->ptr + dp->size;
+			if (dp->size == sizeof(union align)) {
+            *bp = dp->free;
+            free(dp->ptr);
+            free(dp);
+			}
+			if ((dp = dalloc(ptr, nbytes, file, line)) != NULL) {
 				unsigned h = hash(ptr, htab);
-				bp->link = htab[h];
-				htab[h] = bp;
+				dp->link = htab[h];
+				htab[h] = dp;
 				return ptr;
 			} else
 				{
