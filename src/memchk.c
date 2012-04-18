@@ -92,25 +92,24 @@ static struct descriptor *dalloc(void *ptr, long size,
 	return avail++;
 }
 void *Mem_alloc(long nbytes, const char *file, int line){
-   struct descriptor **bp;
+   struct descriptor *curr, *prev;
 	void *ptr;
 	assert(nbytes > 0);
 	nbytes = ((nbytes + sizeof (union align) - 1)/
 		(sizeof (union align)))*(sizeof (union align));
-	for (bp = &(freelist.free); *bp; bp = &(*bp)->free) {
-		if ((*bp)->size > nbytes) {
-         struct descriptor *dp = *bp;
-			dp->size -= nbytes;
-			ptr = (char *)dp->ptr + dp->size;
-			if (dp->size == sizeof(union align)) {
-            *bp = dp->free;
-            free(dp->ptr);
-            free(dp);
+   for (prev = &freelist, curr = freelist.free; curr; prev = curr, curr = curr->free) {
+		if (curr->size > nbytes) {
+         curr->size -= nbytes;
+			ptr = (char *)curr->ptr + curr->size;
+			if (curr->size == sizeof(union align)) {
+            prev->free = curr->free;
+            free(curr->ptr);
+            free(curr);
 			}
-			if ((dp = dalloc(ptr, nbytes, file, line)) != NULL) {
+			if ((curr = dalloc(ptr, nbytes, file, line)) != NULL) {
 				unsigned h = hash(ptr, htab);
-				dp->link = htab[h];
-				htab[h] = dp;
+				curr->link = htab[h];
+				htab[h] = curr;
 				return ptr;
 			} else
 				{
@@ -120,7 +119,7 @@ void *Mem_alloc(long nbytes, const char *file, int line){
 						Except_raise(&Mem_Failed, file, line);
 				}
 		}
-		if (bp == &freelist) {
+		if (curr == &freelist) {
 			struct descriptor *newptr;
 			if ((ptr = malloc(nbytes + NALLOC)) == NULL
 			||  (newptr = dalloc(ptr, nbytes + NALLOC,
