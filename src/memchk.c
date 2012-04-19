@@ -39,14 +39,31 @@ static struct descriptor *find(const void *ptr) {
       bp = bp->link;
    return bp;
 }
+static FILE *log;
+
 void Mem_free(void *ptr, const char *file, int line) {
    if (ptr) {
-      struct descriptor *bp;
+      struct descriptor *bp = NULL;
       if (((unsigned long)ptr)%(sizeof (union align)) != 0
-      || (bp = find(ptr)) == NULL || bp->free)
-         Except_raise(&Assert_Failed, file, line);
-      bp->free = freelist.free;
-      freelist.free = bp;
+      || (bp = find(ptr)) == NULL || bp->free) {
+            if (log == NULL) {
+               Except_raise(&Assert_Failed, file, line);
+            } else {
+               fprintf(log, "** freeing %s\n", 
+               (bp && bp->free) ? "free memory" : "invalid memory");
+               if (file)
+                  fprintf(log, "Mem_free(%p) called from %s:%d\n", 
+                  ptr, file, line);
+               if (bp && bp->free && bp->file)
+                  fprintf(log, 
+                  "This block is %ld bytes long and was allocated from %s:%d\n", 
+                  bp->size, bp->file, bp->line);        
+            } 
+      }
+      if (bp) {
+         bp->free = freelist.free;
+         freelist.free = bp;
+      }
    }
 }
 void *Mem_resize(void *ptr, long nbytes,
@@ -97,7 +114,8 @@ void *Mem_alloc(long nbytes, const char *file, int line){
    assert(nbytes > 0);
    nbytes = ((nbytes + sizeof (union align) - 1)/
       (sizeof (union align)))*(sizeof (union align));
-   for (prev = &freelist, curr = freelist.free; curr; prev = curr, curr = curr->free) {
+   for (prev = &freelist, curr = freelist.free; curr; 
+   prev = curr, curr = curr->free) {
       if (curr->size > nbytes) {
          curr->size -= nbytes;
          ptr = (char *)curr->ptr + curr->size;
@@ -136,4 +154,7 @@ void *Mem_alloc(long nbytes, const char *file, int line){
    }
    assert(0);
    return NULL;
+}
+void Mem_log(FILE *fp) {
+   log = fp;
 }

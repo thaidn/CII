@@ -1,6 +1,7 @@
 /* $Id: mem.h 6 2007-01-22 00:45:22Z drhanson $ */
 #ifndef MEM_INCLUDED
 #define MEM_INCLUDED
+#include <stdio.h>
 #include "except.h"
 extern const Except_T Mem_Failed;
 extern void *Mem_alloc (long nbytes,
@@ -11,6 +12,7 @@ extern void Mem_free(void *ptr,
 	const char *file, int line);
 extern void *Mem_resize(void *ptr, long nbytes,
 	const char *file, int line);
+extern void Mem_log(FILE *fp);
 #define ALLOC(nbytes) \
 	Mem_alloc((nbytes), __FILE__, __LINE__)
 #define CALLOC(count, nbytes) \
