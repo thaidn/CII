@@ -48,22 +48,20 @@ void Mem_free(void *ptr, const char *file, int line) {
       || (bp = find(ptr)) == NULL || bp->free) {
             if (log == NULL) {
                Except_raise(&Assert_Failed, file, line);
-            } else {
-               fprintf(log, "** freeing %s\n", 
-               (bp && bp->free) ? "free memory" : "invalid memory");
-               if (file)
-                  fprintf(log, "Mem_free(%p) called from %s:%d\n", 
-                  ptr, file, line);
-               if (bp && bp->free && bp->file)
-                  fprintf(log, 
-                  "This block is %ld bytes long and was allocated from %s:%d\n", 
-                  bp->size, bp->file, bp->line);        
-            } 
+            }
+            fprintf(log, "** freeing %s\n", 
+            (bp && bp->free) ? "free memory" : "unallocated memory");
+            if (file)
+               fprintf(log, "Mem_free(%p) called from %s:%d\n", 
+               ptr, file, line);
+            if (bp && bp->free && bp->file)
+               fprintf(log, 
+               "This block is %ld bytes long and was allocated from %s:%d\n", 
+               bp->size, bp->file, bp->line);
+            return;        
       }
-      if (bp) {
-         bp->free = freelist.free;
-         freelist.free = bp;
-      }
+      bp->free = freelist.free;
+      freelist.free = bp;
    }
 }
 void *Mem_resize(void *ptr, long nbytes,
@@ -73,8 +71,21 @@ void *Mem_resize(void *ptr, long nbytes,
    assert(ptr);
    assert(nbytes > 0);
    if (((unsigned long)ptr)%(sizeof (union align)) != 0
-   || (bp = find(ptr)) == NULL || bp->free)
-      Except_raise(&Assert_Failed, file, line);
+   || (bp = find(ptr)) == NULL || bp->free) {
+      if (log == NULL) {
+         Except_raise(&Assert_Failed, file, line);
+      }
+      fprintf(log, "** resizing %s\n", 
+      (bp && bp->free) ? "free memory" : "unallocated memory");
+      if (file)
+         fprintf(log, "Mem_resize(%p) called from %s:%d\n", 
+         ptr, file, line);
+      if (bp && bp->free && bp->file)
+         fprintf(log, 
+         "This block is %ld bytes long and was allocated from %s:%d\n", 
+         bp->size, bp->file, bp->line);
+      return NULL;
+   }
    newptr = Mem_alloc(nbytes, file, line);
    memcpy(newptr, ptr,
       nbytes < bp->size ? nbytes : bp->size);
