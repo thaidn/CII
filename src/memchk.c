@@ -1,9 +1,9 @@
-static char rcsid[] = "$Id: memchk.c 6 2007-01-22 00:45:22Z drhanson $";
 #include <stdlib.h>
 #include <string.h>
 #include "assert.h"
 #include "except.h"
 #include "mem.h"
+
 union align {
 #ifdef MAXALIGN
    char pad[MAXALIGN];
@@ -18,13 +18,22 @@ union align {
    long double ld;
 #endif
 };
+
 #define hash(p, t) (((unsigned long)(p)>>3) & \
    (sizeof (t)/sizeof ((t)[0])-1))
+   
 #define NDESCRIPTORS 512
+
 #define NALLOC ((4096 + sizeof (union align) - 1)/ \
    (sizeof (union align)))*(sizeof (union align))
+   
 #define NELEMS(x) ((sizeof (x))/(sizeof ((x)[0])))
+
+#define BLOCK_FMT "This block is %ld bytes long" \
+   "and was allocated from %s:%d\n"
+
 const Except_T Mem_Failed = { "Allocation Failed" };
+
 static struct descriptor {
    struct descriptor *free;
    struct descriptor *link;
@@ -33,13 +42,16 @@ static struct descriptor {
    const char *file;
    int line;
 } *htab[2048];
+
 static struct descriptor freelist = { &freelist };
+
 static struct descriptor *find(const void *ptr) {
    struct descriptor *bp = htab[hash(ptr, htab)];
    while (bp && bp->ptr != ptr)
       bp = bp->link;
    return bp;
 }
+
 static FILE *log;
 
 void Mem_free(void *ptr, const char *file, int line) {
@@ -56,16 +68,14 @@ void Mem_free(void *ptr, const char *file, int line) {
                fprintf(log, "Mem_free(%p) called from %s:%d\n", 
                   ptr, file, line);
             if (bp && bp->free && bp->file)
-               fprintf(log, 
-                  "This block is %ld bytes long " 
-                  "and was allocated from %s:%d\n", 
-                  bp->size, bp->file, bp->line);
+               fprintf(log, BLOCK_FMT, bp->size, bp->file, bp->line);
             return;        
       }
       bp->free = freelist.free;
       freelist.free = bp;
    }
 }
+
 void *Mem_resize(void *ptr, long nbytes,
    const char *file, int line) {
    struct descriptor *bp;
@@ -83,10 +93,7 @@ void *Mem_resize(void *ptr, long nbytes,
          fprintf(log, "Mem_resize(%p) called from %s:%d\n", 
          ptr, file, line);
       if (bp && bp->free && bp->file)
-         fprintf(log, 
-            "This block is %ld bytes long " 
-            "and was allocated from %s:%d\n", 
-            bp->size, bp->file, bp->line);
+         fprintf(log, BLOCK_FMT, bp->size, bp->file, bp->line);
       return NULL;
    }
    newptr = Mem_alloc(nbytes, file, line);
@@ -95,6 +102,7 @@ void *Mem_resize(void *ptr, long nbytes,
    Mem_free(ptr, file, line);
    return newptr;
 }
+
 void *Mem_calloc(long count, long nbytes,
    const char *file, int line) {
    void *ptr;
@@ -104,6 +112,7 @@ void *Mem_calloc(long count, long nbytes,
    memset(ptr, '\0', count*nbytes);
    return ptr;
 }
+
 static struct descriptor *dalloc(void *ptr, long size,
    const char *file, int line) {
    static struct descriptor *avail;
@@ -122,6 +131,7 @@ static struct descriptor *dalloc(void *ptr, long size,
    nleft--;
    return avail++;
 }
+
 void *Mem_alloc(long nbytes, const char *file, int line){
    struct descriptor *curr, *prev;
    void *ptr;
@@ -135,7 +145,7 @@ void *Mem_alloc(long nbytes, const char *file, int line){
          ptr = (char *)curr->ptr + curr->size;
          if (curr->size == sizeof(union align)) {
             prev->free = curr->free;
-            free(curr->ptr);
+            free((void *)curr->ptr);
             free(curr);
          }
          if ((curr = dalloc(ptr, nbytes, file, line)) != NULL) {
@@ -169,23 +179,25 @@ void *Mem_alloc(long nbytes, const char *file, int line){
    assert(0);
    return NULL;
 }
+
 void Mem_log(FILE *fp) {
    log = fp;
 }
+
 void inuse(const void *ptr, long size,
    const char *file, int line, void *cl) {
       FILE *fp = cl;
       
       fprintf(fp, "** memory in use at %p\n", ptr);
-      fprintf(fp, "This block is %ld bytes long "
-         "and was allocated from %s:%d\n", size,
-         file, line);
+      fprintf(fp, BLOCK_FMT, size, file, line);
 }
+
 void Mem_leak(FILE *fp) {
    if (fp == NULL)
       fp = stderr;
    Mem_map(inuse, fp);
 }
+
 void Mem_map(MemMapFn_T apply, void *cl) {
 	struct descriptor *bp;
    int i;
