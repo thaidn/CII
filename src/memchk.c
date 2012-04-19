@@ -50,14 +50,15 @@ void Mem_free(void *ptr, const char *file, int line) {
                Except_raise(&Assert_Failed, file, line);
             }
             fprintf(log, "** freeing %s\n", 
-            (bp && bp->free) ? "free memory" : "unallocated memory");
+               (bp && bp->free) ? "free memory" : "unallocated memory");
             if (file)
                fprintf(log, "Mem_free(%p) called from %s:%d\n", 
-               ptr, file, line);
+                  ptr, file, line);
             if (bp && bp->free && bp->file)
                fprintf(log, 
-               "This block is %ld bytes long and was allocated from %s:%d\n", 
-               bp->size, bp->file, bp->line);
+                  "This block is %ld bytes long and" 
+                  "was allocated from %s:%d\n", 
+                  bp->size, bp->file, bp->line);
             return;        
       }
       bp->free = freelist.free;
@@ -76,14 +77,15 @@ void *Mem_resize(void *ptr, long nbytes,
          Except_raise(&Assert_Failed, file, line);
       }
       fprintf(log, "** resizing %s\n", 
-      (bp && bp->free) ? "free memory" : "unallocated memory");
+         (bp && bp->free) ? "free memory" : "unallocated memory");
       if (file)
          fprintf(log, "Mem_resize(%p) called from %s:%d\n", 
          ptr, file, line);
       if (bp && bp->free && bp->file)
          fprintf(log, 
-         "This block is %ld bytes long and was allocated from %s:%d\n", 
-         bp->size, bp->file, bp->line);
+            "This block is %ld bytes long and" 
+            "was allocated from %s:%d\n", 
+            bp->size, bp->file, bp->line);
       return NULL;
    }
    newptr = Mem_alloc(nbytes, file, line);
@@ -126,7 +128,7 @@ void *Mem_alloc(long nbytes, const char *file, int line){
    nbytes = ((nbytes + sizeof (union align) - 1)/
       (sizeof (union align)))*(sizeof (union align));
    for (prev = &freelist, curr = freelist.free; curr; 
-   prev = curr, curr = curr->free) {
+      prev = curr, curr = curr->free) {
       if (curr->size > nbytes) {
          curr->size -= nbytes;
          ptr = (char *)curr->ptr + curr->size;

@@ -13,6 +13,8 @@ extern void Mem_free(void *ptr,
 extern void *Mem_resize(void *ptr, long nbytes,
 	const char *file, int line);
 extern void Mem_log(FILE *fp);
+extern void Mem_leak(apply(void *ptr, long size,
+	const char *file, int line, void *cl), void *cl);
 #define ALLOC(nbytes) \
 	Mem_alloc((nbytes), __FILE__, __LINE__)
 #define CALLOC(count, nbytes) \
