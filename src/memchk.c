@@ -23,6 +23,7 @@ union align {
 #define NDESCRIPTORS 512
 #define NALLOC ((4096 + sizeof (union align) - 1)/ \
    (sizeof (union align)))*(sizeof (union align))
+#define NELEMS(x) ((sizeof (x))/(sizeof ((x)[0])))
 const Except_T Mem_Failed = { "Allocation Failed" };
 static struct descriptor {
    struct descriptor *free;
@@ -56,8 +57,8 @@ void Mem_free(void *ptr, const char *file, int line) {
                   ptr, file, line);
             if (bp && bp->free && bp->file)
                fprintf(log, 
-                  "This block is %ld bytes long and" 
-                  "was allocated from %s:%d\n", 
+                  "This block is %ld bytes long " 
+                  "and was allocated from %s:%d\n", 
                   bp->size, bp->file, bp->line);
             return;        
       }
@@ -83,8 +84,8 @@ void *Mem_resize(void *ptr, long nbytes,
          ptr, file, line);
       if (bp && bp->free && bp->file)
          fprintf(log, 
-            "This block is %ld bytes long and" 
-            "was allocated from %s:%d\n", 
+            "This block is %ld bytes long " 
+            "and was allocated from %s:%d\n", 
             bp->size, bp->file, bp->line);
       return NULL;
    }
@@ -170,4 +171,27 @@ void *Mem_alloc(long nbytes, const char *file, int line){
 }
 void Mem_log(FILE *fp) {
    log = fp;
+}
+void inuse(const void *ptr, long size,
+   const char *file, int line, void *cl) {
+      FILE *fp = cl;
+      
+      fprintf(fp, "** memory in use at %p\n", ptr);
+      fprintf(fp, "This block is %ld bytes long "
+         "and was allocated from %s:%d\n", size,
+         file, line);
+}
+void Mem_leak(FILE *fp) {
+   if (fp == NULL)
+      fp = stderr;
+   Mem_map(inuse, fp);
+}
+void Mem_map(MemMapFn_T apply, void *cl) {
+	struct descriptor *bp;
+   int i;
+   assert(apply);
+   for (i = 0; i < NELEMS(htab); i++)
+		for (bp = htab[i]; bp; bp = bp->link)
+         if (bp->free == NULL)
+            apply(bp->ptr, bp->size, bp->file, bp->line, cl);
 }

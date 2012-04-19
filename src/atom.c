@@ -114,11 +114,6 @@ int Atom_length(const char *str) {
 	assert(0);
 	return 0;
 }
-
-/*
-   c.r.e: str is NULL
-   c.r.e: str isn't an atom
-*/
 void Atom_free(const char *str) {
    struct atom *p, *last;
    int i;
@@ -149,10 +144,6 @@ void Atom_reset(void) {
       buckets[i] = NULL;
 	}
 }
-
-/* uc.r.e: the arg list ends with a NULL pointer 
-   uc.r.e: the arg list contains other data types rather than char *
-*/
 void Atom_vload(const char *str, ...) {
    va_list ap;
    char *p;
@@ -164,19 +155,12 @@ void Atom_vload(const char *str, ...) {
       va_end(ap);
    }
 }
-/*
-   c.r.e: str is NULL
-*/
 void Atom_aload(const char *str[]) {
    const char *p;
    assert(str);
    while (p = *str++)
       Atom_string(p);
 }
-
-/*
-   c.r.e: mapfn is NULL
-*/
 void Atom_map(AtomMapFn_T mapfn, void *aux) {
    struct atom *p;
    int i;
