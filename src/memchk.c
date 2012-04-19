@@ -198,7 +198,8 @@ void Mem_leak(FILE *fp) {
    Mem_map(inuse, fp);
 }
 
-void Mem_map(MemMapFn_T apply, void *cl) {
+void Mem_map(void apply(const void *ptr, long size,
+	const char *file, int line, void *cl), void *cl) {
 	struct descriptor *bp;
    int i;
    assert(apply);

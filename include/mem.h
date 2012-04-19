@@ -3,8 +3,6 @@
 #define MEM_INCLUDED
 #include <stdio.h>
 #include "except.h"
-typedef 		 void (*MemMapFn_T)(const void *ptr, long size,
-	const char *file, int line, void *cl);
 extern const Except_T Mem_Failed;
 extern void *Mem_alloc (long nbytes,
 	const char *file, int line);
@@ -16,7 +14,8 @@ extern void *Mem_resize(void *ptr, long nbytes,
 	const char *file, int line);
 extern void Mem_log(FILE *fp);
 extern void Mem_leak(FILE *fp);
-extern void Mem_map(MemMapFn_T apply, void *cl);
+extern void Mem_map(void apply(const void *ptr, long size,
+	const char *file, int line, void *cl), void *cl);
 #define ALLOC(nbytes) \
 	Mem_alloc((nbytes), __FILE__, __LINE__)
 #define CALLOC(count, nbytes) \
