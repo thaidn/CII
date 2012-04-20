@@ -6,6 +6,7 @@
 
 #define T Arena_T
 #define THRESHOLD 10
+#define SIZE(arena) (arena)->limit - (char *)((union header *)(arena) + 1))
 
 const Except_T Arena_NewFailed =
    { "Arena Creation Failed" };  
@@ -36,6 +37,7 @@ union header {
    union align a;
 };
 static T freechunks;
+static T largestchunk;
 static int nfree;
 
 T Arena_new(void) {
@@ -72,12 +74,26 @@ void *Arena_alloc(T arena, long nbytes,
          break;
       }
    }
-   while (nbytes > arena->limit - arena->avail) {
+   if (nbytes > arena->limit - arena->avail) {
       T ptr;
       char *limit;
       
-      if ((ptr = freechunks) != NULL) {
-         freechunks = freechunks->prev;
+      if ((ptr = largestchunk) != NULL && (nbytes <= SIZE(ptr)) {
+         T curr, before, tmp;
+         before = NULL;
+         tmp = freechunks;
+         for (curr = freechunks; curr; before = curr, curr = curr->prev) {
+            if (curr == largestchunk) {
+               if (before)
+                  before->prev = curr->prev;
+               else
+                  freechunks = curr->prev;
+               break;
+            } else if (tmp == NULL || SIZE(curr) > SIZE(tmp)) {
+               tmp = curr;
+            }
+         }
+         largestchunk = tmp;
          nfree--;
          limit = ptr->limit;
       } else {
@@ -120,6 +136,8 @@ void Arena_free(T arena) {
          freechunks = arena->prev;
          nfree++;
          freechunks->limit = arena->limit;
+         if (largestchunk == NULL || SIZE(freechunks) > SIZE(largestchunk))
+            largestchunk = freechunks; 
       } else
          free(arena->prev);
       *arena = tmp;
