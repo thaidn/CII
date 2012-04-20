@@ -6,7 +6,7 @@
 
 #define T Arena_T
 #define THRESHOLD 10
-#define SIZE(arena) (arena)->limit - (char *)((union header *)(arena) + 1))
+#define SIZE(arena) (arena->limit - (char *)((union header *)arena + 1))
 
 const Except_T Arena_NewFailed =
    { "Arena Creation Failed" };  
@@ -78,7 +78,7 @@ void *Arena_alloc(T arena, long nbytes,
       T ptr;
       char *limit;
       
-      if ((ptr = largestchunk) != NULL && (nbytes <= SIZE(ptr)) {
+      if ((ptr = largestchunk) != NULL && nbytes <= SIZE(ptr)) {
          T curr, before, tmp;
          before = NULL;
          tmp = freechunks;
