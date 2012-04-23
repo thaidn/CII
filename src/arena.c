@@ -6,7 +6,7 @@
 
 #define T Arena_T
 #define THRESHOLD 10
-#define SIZE(arena) (arena->limit - (char *)((union header *)arena + 1))
+#define SIZE(arena) ((arena)->limit - (char *)((union header *)(arena) + 1))
 
 const Except_T Arena_NewFailed =
    { "Arena Creation Failed" };  
@@ -58,14 +58,13 @@ void Arena_dispose(T *ap) {
 }
 
 void *Arena_alloc(T arena, long nbytes,
-   const char *file, int line) {
-   T tmp;
-   
+   const char *file, int line) {   
    assert(arena);
    assert(nbytes > 0);
    nbytes = ((nbytes + sizeof (union align) - 1)/
       (sizeof (union align)))*(sizeof (union align));
-   tmp = arena;
+
+   T tmp = arena;
    while (tmp->prev) {
       if (nbytes > tmp->limit - tmp->avail) {
          tmp = tmp->prev;
@@ -81,14 +80,13 @@ void *Arena_alloc(T arena, long nbytes,
       if ((ptr = largestchunk) != NULL && nbytes <= SIZE(ptr)) {
          T curr, before, tmp;
          before = NULL;
-         tmp = freechunks;
+         tmp = NULL;
          for (curr = freechunks; curr; before = curr, curr = curr->prev) {
             if (curr == largestchunk) {
                if (before)
                   before->prev = curr->prev;
                else
                   freechunks = curr->prev;
-               break;
             } else if (tmp == NULL || SIZE(curr) > SIZE(tmp)) {
                tmp = curr;
             }
@@ -97,7 +95,7 @@ void *Arena_alloc(T arena, long nbytes,
          nfree--;
          limit = ptr->limit;
       } else {
-         long m = sizeof (union header) + nbytes + 10*1024;
+         long m = sizeof (union header) + nbytes + ARENA_MIN_SIZE;
          ptr = malloc(m);
          if (ptr == NULL)
             {
@@ -137,9 +135,10 @@ void Arena_free(T arena) {
          nfree++;
          freechunks->limit = arena->limit;
          if (largestchunk == NULL || SIZE(freechunks) > SIZE(largestchunk))
-            largestchunk = freechunks; 
-      } else
+            largestchunk = freechunks;
+      } else {
          free(arena->prev);
+      }
       *arena = tmp;
    }
    assert(arena->limit == NULL);

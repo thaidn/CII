@@ -3,6 +3,7 @@
 #define ARENA_INCLUDED
 #include "except.h"
 #define T Arena_T
+#define ARENA_MIN_SIZE (10 * 1024)
 typedef struct T *T;
 extern const Except_T Arena_NewFailed;
 extern const Except_T Arena_Failed;
