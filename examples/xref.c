@@ -44,6 +44,7 @@ int main(int argc, char *argv[]) {
 		}
 		FREE(array);
 	}
+   Mem_leak(stderr);
 	return EXIT_SUCCESS;
 }
 int compare(const void *x, const void *y) {
@@ -58,12 +59,21 @@ void print(Table_T files) {
 		if (*(char *)array[i] != '\0')
 			printf("\t%s:", (char *)array[i]);
 		{
-			int j;
 			void **lines = Set_toArray(array[i+1], NULL);
 			qsort(lines, Set_length(array[i+1]), sizeof (*lines),
 				cmpint);
-			for (j = 0; lines[j]; j++)
-				printf(" %d", *(int *)lines[j]);
+         int j, c;
+			for (j = 0; lines[j]; j++) {
+            printf(" %d", *(int *)lines[j]);
+            c = 0;
+			   while (lines[j+1] 
+			      && *(int *)lines[j+1] == *(int *)lines[j] + 1) {
+			      j++;
+               c = 1;
+			   }
+			   if (c)
+               printf("-%d", *(int *)lines[j]);
+			}
 			FREE(lines);
 		}
 		printf("\n");

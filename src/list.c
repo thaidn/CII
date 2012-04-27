@@ -1,10 +1,11 @@
-static char rcsid[] = "$Id: list.c 6 2007-01-22 00:45:22Z drhanson $";
 #include <stdarg.h>
 #include <stddef.h>
 #include "assert.h"
 #include "mem.h"
 #include "list.h"
+
 #define T List_T
+
 T List_push(T list, void *x) {
 	T p;
 	NEW(p);
@@ -12,6 +13,7 @@ T List_push(T list, void *x) {
 	p->rest  = list;
 	return p;
 }
+
 T List_list(void *x, ...) {
 	va_list ap;
 	T list, *p = &list;
@@ -25,6 +27,7 @@ T List_list(void *x, ...) {
 	va_end(ap);
 	return list;
 }
+
 T List_append(T list, T tail) {
 	T *p = &list;
 	while (*p)
@@ -32,6 +35,7 @@ T List_append(T list, T tail) {
 	*p = tail;
 	return list;
 }
+
 T List_copy(T list) {
 	T head, *p = &head;
 	for ( ; list; list = list->rest) {
@@ -42,6 +46,7 @@ T List_copy(T list) {
 	*p = NULL;
 	return head;
 }
+
 T List_pop(T list, void **x) {
 	if (list) {
 		T head = list->rest;
@@ -52,6 +57,7 @@ T List_pop(T list, void **x) {
 	} else
 		return list;
 }
+
 T List_reverse(T list) {
 	T head = NULL, next;
 	for ( ; list; list = next) {
@@ -61,12 +67,14 @@ T List_reverse(T list) {
 	}
 	return head;
 }
+
 int List_length(T list) {
 	int n;
 	for (n = 0; list; list = list->rest)
 		n++;
 	return n;
 }
+
 void List_free(T *list) {
 	T next;
 	assert(list);
@@ -75,12 +83,14 @@ void List_free(T *list) {
 		FREE(*list);
 	}
 }
+
 void List_map(T list,
 	void apply(void **x, void *cl), void *cl) {
 	assert(apply);
 	for ( ; list; list = list->rest)
 		apply(&list->first, cl);
 }
+
 void **List_toArray(T list, void *end) {
 	int i, n = List_length(list);
 	void **array = ALLOC((n + 1)*sizeof (*array));

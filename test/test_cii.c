@@ -3,11 +3,13 @@
 #include "test_atom.h"
 #include "test_arena.h"
 
-int setup(void) {
+int setup(void) 
+{
    return 0;
 }
 
-int teardown(void) {
+int teardown(void) 
+{
    return 0;
 }
 
@@ -17,7 +19,7 @@ CU_SuiteInfo suites[] = {
   CU_SUITE_INFO_NULL,
 };
 
-int main()
+int main() 
 {
    if (CU_initialize_registry() != CUE_SUCCESS)
       return CU_get_error();

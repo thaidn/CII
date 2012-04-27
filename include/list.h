@@ -1,4 +1,3 @@
-/* $Id: list.h 6 2007-01-22 00:45:22Z drhanson $ */
 #ifndef LIST_INCLUDED
 #define LIST_INCLUDED
 #define T List_T

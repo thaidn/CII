@@ -5,7 +5,8 @@
    Arena_alloc((arena), (nbytes), __FILE__, __LINE__)
 #define DUMMY 0
 
-void test_Arena_reuse_existing_chunk(void) {
+void test_Arena_reuse_existing_chunk(void) 
+{
    Arena_T arena = Arena_new();
    /* first chunk */
    char *p = ARENA_ALLOC(arena, 1);
@@ -23,7 +24,8 @@ void test_Arena_reuse_existing_chunk(void) {
    Arena_dispose(&arena);
 }
 
-void test_Arena_use_largest_free_chunk(void) {
+void test_Arena_use_largest_free_chunk(void) 
+{
    Arena_T arena = Arena_new();
    char *p = ARENA_ALLOC(arena, ARENA_MIN_SIZE);
    p = ARENA_ALLOC(arena, ARENA_MIN_SIZE*2);
