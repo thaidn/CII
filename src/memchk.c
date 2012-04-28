@@ -143,11 +143,8 @@ void *Mem_alloc(long nbytes, const char *file, int line){
       if (curr->size > nbytes) {
          curr->size -= nbytes;
          ptr = (char *)curr->ptr + curr->size;
-         if (curr->size == sizeof(union align)) {
+         if (curr->size == sizeof(union align))
             prev->free = curr->free;
-            free((void *)curr->ptr);
-            free(curr);
-         }
          if ((curr = dalloc(ptr, nbytes, file, line)) != NULL) {
             unsigned h = hash(ptr, htab);
             curr->link = htab[h];
