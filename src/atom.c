@@ -6,11 +6,13 @@ static char rcsid[] = "$Id: atom.c 6 2007-01-22 00:45:22Z drhanson $";
 #include <stdarg.h>
 #include "mem.h"
 #define NELEMS(x) ((sizeof (x))/(sizeof ((x)[0])))
+
 static struct atom {
 	struct atom *link;
 	int len;
 	char *str;
 } *buckets[2048];
+
 static unsigned long scatter[] = {
 2078917053, 143302914, 1027100827, 1953210302, 755253631, 2002600785,
 1405390230, 45248011, 1099951567, 433832350, 2018585307, 438263339,
@@ -56,14 +58,17 @@ static unsigned long scatter[] = {
 2143346068, 1975249606, 1136476375, 262925046, 92778659, 1856406685,
 1884137923, 53392249, 1735424165, 1602280572
 };
+
 const char *Atom_string(const char *str) {
    assert(str);
    return Atom_new(str, strlen(str));
 }
+
 const char *Atom_int(long n) {
 	char str[43];
-	char *s = str + sizeof str;
+	char *s = str + sizeof(str);
 	unsigned long m;
+
 	if (n == LONG_MIN)
 		m = LONG_MAX + 1UL;
 	else if (n < 0)
@@ -75,12 +80,14 @@ const char *Atom_int(long n) {
 	while ((m /= 10) > 0);
 	if (n < 0)
 		*--s = '-';
-	return Atom_new(s, (str + sizeof str) - s);
+	return Atom_new(s, (str + sizeof(str)) - s);
 }
+
 const char *Atom_new(const char *str, int len) {
 	unsigned long h;
 	int i;
 	struct atom *p;
+
 	assert(str);
 	assert(len >= 0);
 	for (h = 0, i = 0; i < len; i++)
@@ -103,9 +110,11 @@ const char *Atom_new(const char *str, int len) {
 	buckets[h] = p;
 	return p->str;
 }
+
 int Atom_length(const char *str) {
 	struct atom *p;
 	int i;
+
 	assert(str);
 	for (i = 0; i < NELEMS(buckets); i++)
 		for (p = buckets[i]; p; p = p->link)
@@ -114,9 +123,11 @@ int Atom_length(const char *str) {
 	assert(0);
 	return 0;
 }
+
 void Atom_free(const char *str) {
    struct atom *p, *last;
    int i;
+
    assert(str);
    for (i = 0; i < NELEMS(buckets); i++)
       for (p = buckets[i]; p; last = p, p = p->link) {
@@ -144,9 +155,11 @@ void Atom_reset(void) {
       buckets[i] = NULL;
 	}
 }
+
 void Atom_vload(const char *str, ...) {
    va_list ap;
    char *p;
+
    if (str) {
       Atom_string(str);
       va_start(ap, str);
@@ -155,15 +168,19 @@ void Atom_vload(const char *str, ...) {
       va_end(ap);
    }
 }
+
 void Atom_aload(const char *str[]) {
    const char *p;
+
    assert(str);
    while (p = *str++)
       Atom_string(p);
 }
+
 void Atom_map(AtomMapFn_T mapfn, void *aux) {
    struct atom *p;
    int i;
+   
    assert(mapfn);
    for (i = 0; i < NELEMS(buckets); i++)
 		for (p = buckets[i]; p; p = p->link)
